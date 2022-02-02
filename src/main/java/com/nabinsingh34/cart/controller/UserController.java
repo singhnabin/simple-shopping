@@ -1,6 +1,7 @@
 package com.nabinsingh34.cart.controller;
 
 
+import com.nabinsingh34.cart.dto.LoginRequest;
 import com.nabinsingh34.cart.dto.UserRequest;
 import com.nabinsingh34.cart.exception.UserNameNotFound;
 import com.nabinsingh34.cart.model.User;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -63,13 +65,14 @@ public class UserController {
     }
 
     @PostMapping("/users")
-    public User createUser(@RequestBody @Valid UserRequest userRequest){
-//        if(results.hasErrors()){
-//            System.out.println(results.getFieldError().getDefaultMessage());
+    public ResponseEntity<Object> createUser(@RequestBody @Valid UserRequest userRequest){
+       Optional<User> existingUser=  userService.getUserByEmail(userRequest.getEmail());
+             if(existingUser.isPresent()){
+                 return ApiResponse.generateResponse(HttpStatus.OK.value(),"User fetched successfully",existingUser,null);
+             }
+             User user= userService.createUser(userRequest);
+             return ApiResponse.generateResponse(HttpStatus.NOT_FOUND.value(),"User created",user,null);
 //
-//        }
-        User savedUser=userService.createUser(userRequest);
-        return savedUser;
     }
 
     @PutMapping("/users/{id}")
@@ -81,6 +84,12 @@ public class UserController {
 
         return userService.updateUser(existingUser.get(),userRequest);
     }
+//
+//    @PostMapping("/users/login")
+//    public ResponseEntity<Object> login(@RequestBody UserRequest userRequest){
+////      Map<String, Object> userDetails= userService.login(userRequest);
+////      return ApiResponse.generateResponse(HttpStatus.OK.value(), "User authenticated",userDetails,null);
+//    }
 
     @DeleteMapping("/users/{id}")
     public ResponseEntity<Object> deleteUser(@PathVariable Long id){
@@ -90,6 +99,12 @@ public class UserController {
             return ApiResponse.generateResponse(HttpStatus.OK.value(),"User deleted successfully with id "+id,null,null);
         }
         return ApiResponse.generateResponse(HttpStatus.NOT_FOUND.value(),"User with id "+id +" not found in our database",null,"User not Found");
+
+    }
+    @PostMapping("/users/login")
+    public ResponseEntity<Object> userLogin(@RequestBody LoginRequest loginRequest){
+        Map<String,Object> res= userService.userLogin(loginRequest);
+        return ApiResponse.generateResponse(HttpStatus.OK.value(), "Login successfull",res,null);
 
     }
 }
